@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Planner & Autonomous Assistant</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .transition-transform-600 { transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-full flex flex-col md:flex-row overflow-hidden selection:bg-indigo-500 selection:text-white">
+
+    <aside class="w-full md:w-64 bg-slate-800/85 backdrop-blur-md border-r border-slate-700/60 flex flex-col z-20 shrink-0">
+        <div class="p-6 border-b border-slate-700/60 flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 text-white font-bold text-xl">
+                <i class="fa-solid fa-brain"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">AI Study Planner</h1>
+                <p class="text-xs text-slate-400">Autonomous Assistant</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                <span>Dashboard</span>
+            </button>
+            <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 hover:bg-slate-700/50 hover:text-white">
+                <i class="fa-solid fa-list-check w-5 text-center"></i>
+                <span>Tasks & Subjects</span>
+            </button>
+            <button onclick="switchTab('timetable')" id="nav-timetable" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 hover:bg-slate-700/50 hover:text-white">
+                <i class="fa-solid fa-calendar-days w-5 text-center"></i>
+                <span>Study Timetable</span>
+            </button>
+            <button onclick="switchTab('flashcards')" id="nav-flashcards" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 hover:bg-slate-700/50 hover:text-white">
+                <i class="fa-solid fa-clone w-5 text-center"></i>
+                <span>Flashcards</span>
+            </button>
+            <button onclick="switchTab('attendance')" id="nav-attendance" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 hover:bg-slate-700/50 hover:text-white">
+                <i class="fa-solid fa-user-check w-5 text-center"></i>
+                <span>Attendance Calc</span>
+            </button>
+            <button onclick="switchTab('breaks')" id="nav-breaks" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-300 hover:bg-slate-700/50 hover:text-white">
+                <i class="fa-solid fa-mug-hot w-5 text-center"></i>
+                <span>Breaks & Fun</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-slate-700/60 bg-slate-900/40">
+            <div class="p-3 rounded-xl bg-slate-800 border border-slate-700/60 text-xs">
+                <p class="font-semibold text-indigo-300 mb-1"><i class="fa-solid fa-quote-left mr-1"></i> Quote of the Day</p>
+                <p id="sidebar-quote" class="text-slate-300 italic">"Small Progress Is Still Progress"</p>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 relative">
+        
+        <!-- Top Navbar -->
+        <header class="h-16 border-b border-slate-800 bg-slate-900/60 backdrop-blur px-6 flex items-center justify-between shrink-0 z-10">
+            <div class="flex items-center space-x-3">
+                <span id="current-view-title" class="text-lg font-bold text-white tracking-wide">Dashboard</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="openAddTaskModal()" class="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg shadow-indigo-500/25 transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Task</span>
+                </button>
+                <button onclick="toggleAIChatDrawer()" class="bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 px-3.5 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-robot"></i>
+                    <span class="hidden sm:inline">AI Agent</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Scroll Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 relative pb-24">
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="tab-dashboard" class="space-y-6 max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-gradient-to-r from-indigo-950/80 via-purple-950/60 to-slate-900 p-6 md:p-8 rounded-3xl border border-indigo-500/20 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div>
+                            <span class="inline-block px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold mb-4 border border-indigo-500/30">AI Autonomous Study Assistant</span>
+                            <h2 class="text-2xl md:text-3xl font-bold tracking-tight text-white mb-2">Welcome back, Scholar! 🚀</h2>
+                            <p class="text-slate-300 text-sm md:text-base">Tip: Open the AI Agent chat in the top right to talk directly to your assistant and say things like <strong class="text-indigo-300">"I finished Mathematics"</strong>!</p>
+                        </div>
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <button onclick="switchTab('tasks')" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all backdrop-blur border border-white/10">Manage Tasks</button>
+                            <button onclick="switchTab('timetable')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-all shadow-lg shadow-indigo-600/30">View Timetable</button>
+                        </div>
+                    </div>
+
+                    <!-- AI Recommendation Box -->
+                    <div class="bg-slate-800/80 backdrop-blur border border-slate-700/60 p-6 rounded-3xl shadow-xl flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center space-x-2 text-indigo-400 font-semibold mb-3">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span>AI Workload Intelligence</span>
+                            </div>
+                            <p id="ai-rec-text" class="text-slate-300 text-sm leading-relaxed">Analyzing active study schedule...</p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+                            <span>Status: Active Agent</span>
+                            <span class="text-emerald-400 flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-1.5"></span> Optimized</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-6 rounded-2xl shadow-lg flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl font-bold border border-indigo-500/30">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Tasks</p>
+                            <h3 id="stat-total" class="text-2xl font-bold text-white mt-0.5">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-6 rounded-2xl shadow-lg flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl font-bold border border-emerald-500/30">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Completed</p>
+                            <h3 id="stat-completed" class="text-2xl font-bold text-white mt-0.5">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-6 rounded-2xl shadow-lg flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl font-bold border border-amber-500/30">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Hours Planned</p>
+                            <h3 id="stat-hours" class="text-2xl font-bold text-white mt-0.5">0h</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-6 rounded-2xl shadow-lg flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center text-xl font-bold border border-violet-500/30">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Progress</p>
+                            <div class="flex items-center justify-between mt-1">
+                                <h3 id="stat-progress-text" class="text-lg font-bold text-white">0%</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar Card -->
+                <div class="bg-slate-800/70 border border-slate-700/60 p-6 rounded-3xl shadow-lg">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-semibold text-white">Overall Study Completion Rate</h3>
+                        <span id="progress-percentage-label" class="text-sm font-bold text-indigo-400">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-700/60 h-3.5 rounded-full overflow-hidden p-0.5">
+                        <div id="progress-bar-fill" class="bg-gradient-to-r from-indigo-500 to-violet-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: TASKS & SUBJECTS -->
+            <section id="tab-tasks" class="space-y-6 max-w-7xl mx-auto hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/70 border border-slate-700/60 p-6 rounded-3xl shadow-lg">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Study Tasks & Subjects (14 Pre-loaded)</h2>
+                        <p class="text-slate-400 text-sm mt-1">Manage single tasks, batch add multiple subjects, or mark tasks complete.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <button onclick="openAddTaskModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 flex-1 sm:flex-initial">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Single Task</span>
+                        </button>
+                        <button onclick="openAddMultipleModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center space-x-2 border border-slate-600 flex-1 sm:flex-initial">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <span>Batch Add Multiple</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800/70 border border-slate-700/60 rounded-3xl shadow-lg overflow-hidden">
+                    <div class="p-6 border-b border-slate-700/60 flex justify-between items-center">
+                        <h3 class="font-semibold text-white">All Tasks List</h3>
+                        <span id="task-count-badge" class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold">0 Tasks</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-700/60 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-900/40">
+                                    <th class="py-4 px-6">#</th>
+                                    <th class="py-4 px-6">Subject</th>
+                                    <th class="py-4 px-6">Topic</th>
+                                    <th class="py-4 px-6">Hours</th>
+                                    <th class="py-4 px-6">Difficulty</th>
+                                    <th class="py-4 px-6">Priority</th>
+                                    <th class="py-4 px-6">Status</th>
+                                    <th class="py-4 px-6 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasks-table-body" class="divide-y divide-slate-700/40 text-sm">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: STUDY TIMETABLE -->
+            <section id="tab-timetable" class="space-y-6 max-w-7xl mx-auto hidden">
+                <div class="bg-slate-800/70 border border-slate-700/60 p-6 md:p-8 rounded-3xl shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">AI Generated Study Timetable</h2>
+                        <p class="text-slate-400 text-sm mt-1">Automatically prioritized and scheduled slots based on difficulty and time required.</p>
+                    </div>
+                    <button onclick="renderTimetable()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-lg shadow-indigo-600/30 flex items-center space-x-2">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>Refresh Timetable</span>
+                    </button>
+                </div>
+
+                <div id="timetable-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dynamic timetable cards -->
+                </div>
+            </section>
+
+            <!-- TAB 4: FLASHCARDS -->
+            <section id="tab-flashcards" class="space-y-6 max-w-7xl mx-auto hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-800/70 border border-slate-700/60 p-6 rounded-3xl shadow-lg">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Interactive Flashcards</h2>
+                        <p class="text-slate-400 text-sm mt-1">Add custom flashcards and practice active recall by subject.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="openAddFlashcardModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-lg shadow-indigo-600/30 flex items-center space-x-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Flashcard</span>
+                        </button>
+                        <button onclick="startPracticeSession()" class="bg-violet-600 hover:bg-violet-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-lg shadow-violet-600/30 flex items-center space-x-2">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Practice Mode</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="flashcards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dynamic flashcard list -->
+                </div>
+            </section>
+
+            <!-- TAB 5: ATTENDANCE CALCULATOR -->
+            <section id="tab-attendance" class="space-y-6 max-w-4xl mx-auto hidden">
+                <div class="bg-slate-800/70 border border-slate-700/60 p-6 md:p-8 rounded-3xl shadow-lg">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-white">Attendance Safety Calculator</h2>
+                        <p class="text-slate-400 text-sm mt-1">Check if attendance is safe (>= 75%) or calculate exact consecutive classes needed.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Classes Attended</label>
+                            <input type="number" id="att-attended" min="0" placeholder="e.g. 30" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Total Classes Conducted</label>
+                            <input type="number" id="att-total" min="1" placeholder="e.g. 40" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-all">
+                        </div>
+                    </div>
+
+                    <button onclick="calculateAttendance()" class="w-full bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white py-3 rounded-xl font-semibold shadow-lg shadow-indigo-500/25 transition-all">
+                        Calculate Attendance Status
+                    </button>
+
+                    <div id="attendance-result-card" class="mt-6 p-6 rounded-2xl bg-slate-900/80 border border-slate-700/60 hidden">
+                        <!-- Result populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: BREAKS & FUN -->
+            <section id="tab-breaks" class="space-y-6 max-w-7xl mx-auto hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Mind Refresh -->
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-6 md:p-8 rounded-3xl shadow-lg flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center text-lg border border-teal-500/30">
+                                    <i class="fa-solid fa-spa"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-white">5-Minute Mind Refresh</h3>
+                            </div>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-6">Need a quick mental reset during study sessions? Get a random restorative exercise.</p>
+                            <div id="refresh-display-box" class="p-5 rounded-2xl bg-slate-900/80 border border-slate-700/60 text-slate-200 text-sm mb-6 min-h-[90px] flex items-center justify-center text-center italic">
+                                Click the button below to get your mind refresh task!
+                            </div>
+                        </div>
+                        <button onclick="generateQuickRefresh()" class="w-full bg-teal-600 hover:bg-teal-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-teal-600/30 transition-all">
+                            Get Refresh Exercise
+                        </button>
+                    </div>
+
+                    <!-- Study Joke Generator -->
+                    <div class="bg-slate-800/70 border border-slate-700/60 p-6 md:p-8 rounded-3xl shadow-lg flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center text-lg border border-pink-500/30">
+                                    <i class="fa-solid fa-face-laugh-squint"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-white">Study Joke Generator</h3>
+                            </div>
+                            <p class="text-slate-300 text-sm leading-relaxed mb-6">Take a quick laugh break with hilarious student and exam jokes.</p>
+                            <div id="joke-display-box" class="p-5 rounded-2xl bg-slate-900/80 border border-slate-700/60 text-slate-200 text-sm mb-6 min-h-[90px] flex items-center justify-center text-center italic">
+                                Click below to unleash a study joke!
+                            </div>
+                        </div>
+                        <button onclick="generateStudyJoke()" class="w-full bg-pink-600 hover:bg-pink-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-pink-600/30 transition-all">
+                            Tell Me a Study Joke
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- FLOATING AI AGENT CHAT DRAWER -->
+        <div id="ai-chat-drawer" class="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] bg-slate-800 border border-slate-700 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-50 transition-all duration-300 hidden">
+            <!-- Drawer Header -->
+            <div class="p-4 bg-slate-900/90 border-b border-slate-700 flex justify-between items-center">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+                        <i class="fa-solid fa-robot text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Autonomous Study Agent</h3>
+                        <p class="text-[10px] text-emerald-400 flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1"></span> Active Listener</p>
+                    </div>
+                </div>
+                <button onclick="toggleAIChatDrawer()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <!-- Chat Messages Container -->
+            <div id="ai-chat-messages" class="p-4 space-y-3 h-64 overflow-y-auto text-xs bg-slate-900/50">
+                <div class="flex items-start space-x-2">
+                    <div class="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0">AI</div>
+                    <div class="bg-slate-800 border border-slate-700 p-3 rounded-2xl text-slate-200">
+                        Hello! I am your AI assistant. You can chat with me anytime. Try saying: <br><em>"I finished Mathematics"</em> or <em>"Mark Physics as complete"</em>!
+                    </div>
+                </div>
+            </div>
+            <!-- Chat Input Bar -->
+            <div class="p-3 bg-slate-900/90 border-t border-slate-700 flex items-center space-x-2">
+                <input type="text" id="ai-chat-input" placeholder="Type a message (e.g. I finished Physics)..." onkeydown="if(event.key==='Enter') sendAIChatMessage()" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500">
+                <button onclick="sendAIChatMessage()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all shadow-md shadow-indigo-600/30">Send</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-add-task" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <h3 class="text-lg font-bold text-white">Add Study Task</h3>
+                <button onclick="closeModal('modal-add-task')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-add-task" onsubmit="handleAddTaskSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Subject Name</label>
+                    <input type="text" id="task-subject" required placeholder="e.g. Mathematics" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Topic / Chapter</label>
+                    <input type="text" id="task-topic" required placeholder="e.g. Integral Calculus" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Hours Required</label>
+                    <input type="number" id="task-hours" min="1" required placeholder="e.g. 3" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Difficulty Level</label>
+                    <select id="task-difficulty" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
+                        <option value="1">1. Easy (Priority = Hours × 1)</option>
+                        <option value="2" selected>2. Medium (Priority = Hours × 2)</option>
+                        <option value="3">3. Hard (Priority = Hours × 3)</option>
+                    </select>
+                </div>
+                <div class="pt-4 flex space-x-3">
+                    <button type="button" onclick="closeModal('modal-add-task')" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-semibold transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-indigo-600/30 transition-all">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-add-multiple" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <h3 class="text-lg font-bold text-white">Batch Add Multiple Tasks</h3>
+                <button onclick="closeModal('modal-add-multiple')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">How many tasks would you like to add?</label>
+                    <input type="number" id="batch-count" min="1" value="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <button onclick="startBatchAdd()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-indigo-600/30 transition-all">Start Batch Setup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-add-flashcard" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <h3 class="text-lg font-bold text-white">Add New Flashcard</h3>
+                <button onclick="closeModal('modal-add-flashcard')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-add-flashcard" onsubmit="handleAddFlashcardSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Subject</label>
+                    <input type="text" id="fc-subject" required placeholder="e.g. Physics" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Question</label>
+                    <textarea id="fc-question" required rows="2" placeholder="What is Newton's Second Law?" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Answer</label>
+                    <textarea id="fc-answer" required rows="2" placeholder="F = ma" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+                <div class="pt-4 flex space-x-3">
+                    <button type="button" onclick="closeModal('modal-add-flashcard')" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-semibold transition-all">Cancel</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-semibold shadow-lg shadow-indigo-600/30 transition-all">Save Card</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-practice-session" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl flex flex-col justify-between min-h-[420px]">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <div>
+                    <h3 id="practice-modal-title" class="text-lg font-bold text-white">Practice Session</h3>
+                    <p id="practice-counter" class="text-xs text-slate-400 mt-0.5">Card 1 of 1</p>
+                </div>
+                <button onclick="closeModal('modal-practice-session')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="my-6 perspective-1000 flex-1 flex items-center justify-center">
+                <div id="flashcard-flip-card" onclick="flipPracticeCard()" class="w-full h-56 relative transform-style-3d transition-transform-600 cursor-pointer">
+                    <div id="practice-card-front" class="absolute inset-0 bg-slate-900/90 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between backface-hidden shadow-xl">
+                        <span id="practice-subject-tag" class="text-xs font-semibold text-indigo-400 uppercase tracking-wide">Subject</span>
+                        <p id="practice-question-text" class="text-base text-slate-100 font-medium text-center my-auto">Question goes here</p>
+                        <p class="text-xs text-slate-400 text-center italic">Click card to reveal answer</p>
+                    </div>
+                    <div id="practice-card-back" class="absolute inset-0 bg-indigo-950/90 border border-indigo-500/40 rounded-2xl p-6 flex flex-col justify-between backface-hidden rotate-y-180 shadow-xl">
+                        <span class="text-xs font-semibold text-indigo-300 uppercase tracking-wide">Answer</span>
+                        <p id="practice-answer-text" class="text-base text-indigo-100 font-medium text-center my-auto">Answer goes here</p>
+                        <p class="text-xs text-indigo-300/70 text-center italic">Click card to flip back</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-4 border-t border-slate-700">
+                <button onclick="prevPracticeCard()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all">Previous</button>
+                <button onclick="nextPracticeCard()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-indigo-600/30">Next Card</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let tasks = [
+            { id: 1, subject: "Mathematics", topic: "Calculus & Limits", hours: 4, difficulty: 3, completed: false },
+            { id: 2, subject: "Physics", topic: "Electromagnetism", hours: 3, difficulty: 3, completed: false },
+            { id: 3, subject: "Chemistry", topic: "Organic Reaction Mechanisms", hours: 3, difficulty: 2, completed: true },
+            { id: 4, subject: "Computer Science", topic: "Data Structures & Trees", hours: 5, difficulty: 3, completed: false },
+            { id: 5, subject: "Data Structures", topic: "Graph Algorithms", hours: 4, difficulty: 3, completed: false },
+            { id: 6, subject: "Algorithms", topic: "Dynamic Programming", hours: 4, difficulty: 3, completed: false },
+            { id: 7, subject: "Operating Systems", topic: "Process Synchronization", hours: 3, difficulty: 2, completed: false },
+            { id: 8, subject: "Database Systems", topic: "Normalization & SQL Queries", hours: 3, difficulty: 2, completed: true },
+            { id: 9, subject: "Computer Networks", topic: "TCP/IP & OSI Layers", hours: 3, difficulty: 2, completed: false },
+            { id: 10, subject: "Software Engineering", topic: "Agile Methodologies & UML", hours: 2, difficulty: 1, completed: false },
+            { id: 11, subject: "Artificial Intelligence", topic: "Neural Networks & Backpropagation", hours: 4, difficulty: 3, completed: false },
+            { id: 12, subject: "Cybersecurity", topic: "Cryptography & Encryption", hours: 3, difficulty: 2, completed: false },
+            { id: 13, subject: "Web Development", topic: "REST APIs & Responsive Design", hours: 3, difficulty: 1, completed: true },
+            { id: 14, subject: "Digital Logic", topic: "Boolean Algebra & Karnaugh Maps", hours: 2, difficulty: 1, completed: false }
+        ];
+
+        let flashcards = [
+            { id: 1, subject: "Mathematics", question: "What is the derivative of sin(x)?", answer: "cos(x)" },
+            { id: 2, subject: "Physics", question: "What is Ohm's Law formula?", answer: "V = I * R" },
+            { id: 3, subject: "Computer Science", question: "What is time complexity of Binary Search?", answer: "O(log n)" },
+            { id: 4, subject: "Artificial Intelligence", question: "What does CNN stand for?", answer: "Convolutional Neural Network" }
+        ];
+
+        let quotes = [
+            "Small Progress Is Still Progress",
+            "Focus on being productive instead of busy.",
+            "The expert in anything was once a beginner.",
+            "Don't wish it were easier. Wish you were better."
+        ];
+
+        let currentPracticeIndex = 0;
+        let isCardFlipped = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('sidebar-quote').innerText = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
+            updateAllViews();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('section[id^="tab-"]').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/30');
+                btn.classList.add('text-slate-300', 'hover:bg-slate-700/50', 'hover:text-white');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-300', 'hover:bg-slate-700/50', 'hover:text-white');
+                activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-lg', 'shadow-indigo-600/30');
+            }
+
+            const titleMap = {
+                dashboard: 'Dashboard',
+                tasks: 'Tasks & Subjects',
+                timetable: 'Study Timetable',
+                flashcards: 'Flashcards',
+                attendance: 'Attendance Calculator',
+                breaks: 'Breaks & Fun'
+            };
+            document.getElementById('current-view-title').innerText = titleMap[tabId] || 'Dashboard';
+
+            if (tabId === 'timetable') renderTimetable();
+            if (tabId === 'flashcards') renderFlashcards();
+        }
+
+        function updateAllViews() {
+            renderTasksTable();
+            updateDashboardStats();
+        }
+
+        function updateDashboardStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const totalHours = tasks.reduce((sum, t) => sum + Number(t.hours), 0);
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-completed').innerText = completed;
+            document.getElementById('stat-hours').innerText = `${totalHours}h`;
+            document.getElementById('stat-progress-text').innerText = `${progress}%`;
+            document.getElementById('progress-percentage-label').innerText = `${progress}%`;
+            document.getElementById('progress-bar-fill').style.width = `${progress}%`;
+
+            const uncompleted = tasks.filter(t => !t.completed).sort((a,b) => (b.hours * b.difficulty) - (a.hours * a.difficulty));
+            if (uncompleted.length > 0) {
+                document.getElementById('ai-rec-text').innerText = `Your highest priority focus is "${uncompleted[0].subject}: ${uncompleted[0].topic}" (${uncompleted[0].hours} hrs). Tackle this during your peak energy hours!`;
+            } else {
+                document.getElementById('ai-rec-text').innerText = `Amazing job! All tasks are completed. Add new subjects or take a well-deserved break!`;
+            }
+        }
+
+        function renderTasksTable() {
+            const tbody = document.getElementById('tasks-table-body');
+            tbody.innerHTML = '';
+            document.getElementById('task-count-badge').innerText = `${tasks.length} Tasks`;
+
+            tasks.forEach((task, index) => {
+                const priorityScore = task.hours * task.difficulty;
+                const diffLabels = { 1: 'Easy', 2: 'Medium', 3: 'Hard' };
+                const diffColors = { 1: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', 2: 'bg-amber-500/20 text-amber-300 border-amber-500/30', 3: 'bg-rose-500/20 text-rose-300 border-rose-500/30' };
+
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-700/30 transition-all';
+                row.innerHTML = `
+                    <td class="py-4 px-6 font-medium text-slate-400">${index + 1}</td>
+                    <td class="py-4 px-6 font-semibold text-white">${task.subject}</td>
+                    <td class="py-4 px-6 text-slate-300">${task.topic}</td>
+                    <td class="py-4 px-6 text-slate-300">${task.hours} hrs</td>
+                    <td class="py-4 px-6"><span class="px-2.5 py-1 rounded-full text-xs border ${diffColors[task.difficulty]}">${diffLabels[task.difficulty]}</span></td>
+                    <td class="py-4 px-6 font-bold text-indigo-400">${priorityScore} pts</td>
+                    <td class="py-4 px-6">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${task.completed ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-700/60 text-slate-300 border border-slate-600'}">
+                            ${task.completed ? 'Completed' : 'Pending'}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-right space-x-2">
+                        <button onclick="toggleTaskStatus(${task.id})" class="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white transition-all" title="Toggle Completion">
+                            <i class="fa-solid ${task.completed ? 'fa-rotate-left' : 'fa-check'}"></i>
+                        </button>
+                        <button onclick="deleteTask(${task.id})" class="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-all" title="Delete Task">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function toggleTaskStatus(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                updateAllViews();
+            }
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            updateAllViews();
+        }
+
+        function openAddTaskModal() { document.getElementById('modal-add-task').classList.remove('hidden'); }
+        function openAddMultipleModal() { document.getElementById('modal-add-multiple').classList.remove('hidden'); }
+        function openAddFlashcardModal() { document.getElementById('modal-add-flashcard').classList.remove('hidden'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
+
+        function handleAddTaskSubmit(e) {
+            e.preventDefault();
+            const subject = document.getElementById('task-subject').value;
+            const topic = document.getElementById('task-topic').value;
+            const hours = Number(document.getElementById('task-hours').value);
+            const difficulty = Number(document.getElementById('task-difficulty').value);
+
+            tasks.push({ id: Date.now(), subject, topic, hours, difficulty, completed: false });
+            closeModal('modal-add-task');
+            document.getElementById('form-add-task').reset();
+            updateAllViews();
+        }
+
+        function startBatchAdd() {
+            const count = Number(document.getElementById('batch-count').value);
+            closeModal('modal-add-multiple');
+            for (let i = 1; i <= count; i++) {
+                tasks.push({
+                    id: Date.now() + i,
+                    subject: `Subject Batch ${i}`,
+                    topic: `Core Concepts Chapter ${i}`,
+                    hours: 3,
+                    difficulty: 2,
+                    completed: false
+                });
+            }
+            updateAllViews();
+        }
+
+        function renderTimetable() {
+            const container = document.getElementById('timetable-container');
+            container.innerHTML = '';
+
+            const sorted = [...tasks].sort((a,b) => (b.hours * b.difficulty) - (a.hours * a.difficulty));
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+            sorted.forEach((task, idx) => {
+                const day = days[idx % days.length];
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800/70 border border-slate-700/60 p-6 rounded-3xl shadow-lg flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30">${day}</span>
+                            <span class="text-xs text-slate-400 font-medium"><i class="fa-solid fa-clock mr-1"></i> ${task.hours} hrs scheduled</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-1">${task.subject}</h3>
+                        <p class="text-slate-300 text-sm mb-4">${task.topic}</p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs">
+                        <span class="text-slate-400">AI Optimized Slot</span>
+                        <span class="${task.completed ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-semibold'}">${task.completed ? 'Completed' : 'Upcoming'}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderFlashcards() {
+            const grid = document.getElementById('flashcards-grid');
+            grid.innerHTML = '';
+            flashcards.forEach(fc => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800/70 border border-slate-700/60 p-6 rounded-3xl shadow-lg flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <span class="text-xs font-semibold text-indigo-400 uppercase tracking-wide mb-2 inline-block">${fc.subject}</span>
+                        <h4 class="text-white font-semibold mb-3">${fc.question}</h4>
+                        <p class="text-slate-300 text-sm bg-slate-900/60 p-3 rounded-xl border border-slate-700/40">Ans: ${fc.answer}</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function handleAddFlashcardSubmit(e) {
+            e.preventDefault();
+            const subject = document.getElementById('fc-subject').value;
+            const question = document.getElementById('fc-question').value;
+            const answer = document.getElementById('fc-answer').value;
+
+            flashcards.push({ id: Date.now(), subject, question, answer });
+            closeModal('modal-add-flashcard');
+            document.getElementById('form-add-flashcard').reset();
+            renderFlashcards();
+        }
+
+        function startPracticeSession() {
+            if (flashcards.length === 0) {
+                alert('Please add at least one flashcard first!');
+                return;
+            }
+            currentPracticeIndex = 0;
+            isCardFlipped = false;
+            document.getElementById('modal-practice-session').classList.remove('hidden');
+            updatePracticeCardDisplay();
+        }
+
+        function updatePracticeCardDisplay() {
+            const fc = flashcards[currentPracticeIndex];
+            document.getElementById('practice-modal-title').innerText = `Practice: ${fc.subject}`;
+            document.getElementById('practice-counter').innerText = `Card ${currentPracticeIndex + 1} of ${flashcards.length}`;
+            document.getElementById('practice-subject-tag').innerText = fc.subject;
+            document.getElementById('practice-question-text').innerText = fc.question;
+            document.getElementById('practice-answer-text').innerText = fc.answer;
+
+            isCardFlipped = false;
+            document.getElementById('flashcard-flip-card').classList.remove('rotate-y-180');
+        }
+
+        function flipPracticeCard() {
+            isCardFlipped = !isCardFlipped;
+            const cardEl = document.getElementById('flashcard-flip-card');
+            if (isCardFlipped) {
+                cardEl.classList.add('rotate-y-180');
+            } else {
+                cardEl.classList.remove('rotate-y-180');
+            }
+        }
+
+        function nextPracticeCard() {
+            currentPracticeIndex = (currentPracticeIndex + 1) % flashcards.length;
+            updatePracticeCardDisplay();
+        }
+
+        function prevPracticeCard() {
+            currentPracticeIndex = (currentPracticeIndex - 1 + flashcards.length) % flashcards.length;
+            updatePracticeCardDisplay();
+        }
+
+        function calculateAttendance() {
+            const attended = Number(document.getElementById('att-attended').value);
+            const total = Number(document.getElementById('att-total').value);
+            const resultCard = document.getElementById('attendance-result-card');
+
+            if (isNaN(attended) || isNaN(total) || total <= 0 || attended > total) {
+                alert('Please enter valid attendance numbers.');
+                return;
+            }
+
+            const currentPct = (attended / total) * 100;
+            resultCard.classList.remove('hidden');
+
+            if (currentPct >= 75) {
+                const safeSkip = Math.floor((attended - 0.75 * total) / 0.75);
+                resultCard.innerHTML = `
+                    <div class="flex items-center space-x-3 text-emerald-400 font-bold text-lg mb-2">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Attendance is Safe (${currentPct.toFixed(1)}%)</span>
+                    </div>
+                    <p class="text-slate-300 text-sm">You can safely skip up to <strong class="text-white">${safeSkip}</strong> consecutive classes without dropping below the 75% threshold.</p>
+                `;
+            } else {
+                const needed = Math.ceil((0.75 * total - attended) / 0.25);
+                resultCard.innerHTML = `
+                    <div class="flex items-center space-x-3 text-rose-400 font-bold text-lg mb-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Attendance is Low (${currentPct.toFixed(1)}%)</span>
+                    </div>
+                    <p class="text-slate-300 text-sm">You need to attend the next <strong class="text-white">${needed}</strong> consecutive classes to reach the safe 75% mark.</p>
+                `;
+            }
+        }
+
+        function generateQuickRefresh() {
+            const exercises = [
+                "Close your eyes and take 5 deep, slow diaphragmatic breaths.",
+                "Stand up, stretch your arms overhead, and gently roll your neck.",
+                "Look away from your screen at an object 20 feet away for 20 seconds.",
+                "Do 10 light shoulder rolls backward to release upper back tension.",
+                "Drink a full glass of cold water to rehydrate your brain."
+            ];
+            const box = document.getElementById('refresh-display-box');
+            box.innerText = `"${exercises[Math.floor(Math.random() * exercises.length)]}"`;
+        }
+
+        function generateStudyJoke() {
+            const jokes = [
+                "Why did the student eat his homework? Because the teacher said it was a piece of cake!",
+                "Parallel lines have so much in common. It’s a shame they’ll never meet.",
+                "Why did the physics professor break up with the biology professor? There was no chemistry.",
+                "My professor told me to stop wasting time on the internet. I told him I was just doing cloud research.",
+                "Why do students sleep during lectures? Because gravity pulls them down when they concentrate!"
+            ];
+            const box = document.getElementById('joke-display-box');
+            box.innerText = `"${jokes[Math.floor(Math.random() * jokes.length)]}"`;
+        }
+
+        // AI Chat Agent Integration
+        function toggleAIChatDrawer() {
+            const drawer = document.getElementById('ai-chat-drawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        function sendAIChatMessage() {
+            const input = document.getElementById('ai-chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chatMsgs = document.getElementById('ai-chat-messages');
+
+            // User Message
+            chatMsgs.innerHTML += `
+                <div class="flex items-start space-x-2 justify-end">
+                    <div class="bg-indigo-600 text-white p-3 rounded-2xl max-w-[80%]">${escapeHTML(text)}</div>
+                </div>
+            `;
+            input.value = '';
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
+
+            // Process intent
+            setTimeout(() => {
+                let reply = processAgentCommand(text);
+                chatMsgs.innerHTML += `
+                    <div class="flex items-start space-x-2">
+                        <div class="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0">AI</div>
+                        <div class="bg-slate-800 border border-slate-700 p-3 rounded-2xl text-slate-200 max-w-[80%]">${reply}</div>
+                    </div>
+                `;
+                chatMsgs.scrollTop = chatMsgs.scrollHeight;
+                updateAllViews();
+            }, 400);
+        }
+
+        function processAgentCommand(msg) {
+            const lower = msg.toLowerCase();
+            
+            // Check for completion intents
+            if (lower.includes('finish') || lower.includes('completed') || lower.includes('done') || lower.includes('mark')) {
+                // Find matching task by subject name
+                const matchedTask = tasks.find(t => lower.includes(t.subject.toLowerCase()));
+                if (matchedTask) {
+                    matchedTask.completed = true;
+                    return `Awesome job! 🎯 I have marked <strong class="text-white">${matchedTask.subject} (${matchedTask.topic})</strong> as completed. Keep up the great momentum!`;
+                } else {
+                    return `I heard you completed something, but I couldn't match that subject name to your active task list. Try saying: <br><em>"I finished Mathematics"</em>`;
+                }
+            }
+
+            if (lower.includes('progress') || lower.includes('status')) {
+                const completed = tasks.filter(t => t.completed).length;
+                const pct = Math.round((completed / tasks.length) * 100);
+                return `You have completed ${completed} out of ${tasks.length} tasks (${pct}% overall completion rate).`;
+            }
+
+            return `Got it! I am monitoring your schedule. Feel free to tell me when you finish a specific subject or task!`;
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
